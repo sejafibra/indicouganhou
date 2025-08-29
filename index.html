@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Promoção Indicou Ganhou</title>
+  <link rel="shortcut icon" href="https://raw.githubusercontent.com/sejafibra/agenda/refs/heads/main/faviconsf.ico" type="image/x-icon">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+  <style>
+    body { background-color:#f8f9fa; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .logo { height:50px; margin:10px 0; }
+    .card { border-radius:10px; box-shadow:0 4px 6px rgba(0,0,0,.1); margin-bottom:20px; }
+    .card-header { background-color:#0d6efd; color:white; border-radius:10px 10px 0 0!important; }
+    .btn-action { padding:0.25rem 0.5rem; font-size:.8rem; }
+    .login-container { max-width:400px; margin:0 auto; padding-top:50px; }
+  </style>
+</head>
+<body>
+<div class="container-fluid">
+  <!-- Cabeçalho -->
+  <div class="row justify-content-center">
+    <div class="col-md-10 text-center">
+      <img src="https://sejafibra.net/wp-content/uploads/2023/06/logonovofibra.png" class="logo">
+      <h2 class="mb-4">Promoção Indicou Ganhou</h2>
+    </div>
+  </div>
+
+  <!-- Login -->
+  <div id="loginSection" class="login-container">
+    <div class="card">
+      <div class="card-header text-center"><h5>Login</h5></div>
+      <div class="card-body">
+        <form id="loginForm">
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" id="loginEmail" class="form-control" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Senha</label>
+            <input type="password" id="loginPassword" class="form-control" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100">Entrar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Conteúdo -->
+  <div id="mainContent" style="display:none;">
+    <!-- Navbar com Logout -->
+    <nav class="navbar navbar-light bg-light mb-3">
+      <div class="container-fluid">
+        <span class="navbar-text">Área Restrita</span>
+        <button id="logoutBtn" class="btn btn-outline-danger btn-sm">Sair</button>
+      </div>
+    </nav>
+
+    <div class="row justify-content-center">
+      <div class="col-md-10">
+
+        <!-- Seletor Cidade -->
+        <div class="card mb-4">
+          <div class="card-header"><h5>Filtrar Cidade</h5></div>
+          <div class="card-body">
+            <select id="citySelector" class="form-select">
+              <option value="Ubatuba">Ubatuba</option>
+              <option value="Caraguá">Caraguá</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Formulário -->
+        <div class="card mb-4">
+          <div class="card-header"><h5>Cadastrar Indicação</h5></div>
+          <div class="card-body">
+            <form id="indicationForm">
+              <div class="row g-3">
+                <div class="col-md-4">
+                  <label class="form-label">Nº Contrato Novo Cliente</label>
+                  <input type="text" id="newContract" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Nº Contrato Cliente que Indicou</label>
+                  <input type="text" id="refContract" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Nome do Novo Cliente</label>
+                  <input type="text" id="newClientName" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Data da Instalação</label>
+                  <input type="date" id="installDate" class="form-control" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Valor da Mensalidade</label>
+                  <input type="number" id="monthlyValue" class="form-control" required>
+                </div>
+              </div>
+              <div class="mt-3">
+                <button type="submit" class="btn btn-primary" id="submitBtn">Cadastrar</button>
+                <button type="button" class="btn btn-secondary" id="cancelEditBtn" style="display:none;">Cancelar Edição</button>
+                <input type="hidden" id="editId">
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Tabela -->
+        <div class="card">
+          <div class="card-header"><h5>Clientes Indicados - <span id="currentCityDisplay">Ubatuba</span></h5></div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                  <tr>
+                    <th>Contrato que Indicou</th>
+                    <th>Mês da Fatura</th>
+                    <th>Valor Desconto</th>
+                    <th>Lançado?</th>
+                    <th>Última Alteração</th>
+                    <th>Ações</th>
+                  </tr>
+                </thead>
+                <tbody id="indicationsTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCcN-3zay99i1am3TACeI7KwY4NTkdlN54",
+  authDomain: "indicou-ganhou.firebaseapp.com",
+  projectId: "indicou-ganhou",
+  storageBucket: "indicou-ganhou.firebasestorage.app",
+  messagingSenderId: "812428893776",
+  appId: "1:812428893776:web:e5a73958d17d83911fbb55"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
+
+const loginSection=document.getElementById("loginSection");
+const mainContent=document.getElementById("mainContent");
+const loginForm=document.getElementById("loginForm");
+const loginEmail=document.getElementById("loginEmail");
+const loginPassword=document.getElementById("loginPassword");
+const indicationForm=document.getElementById("indicationForm");
+const indicationsTableBody=document.getElementById("indicationsTableBody");
+const citySelector=document.getElementById("citySelector");
+const currentCityDisplay=document.getElementById("currentCityDisplay");
+const logoutBtn=document.getElementById("logoutBtn");
+
+const newContract=document.getElementById("newContract");
+const refContract=document.getElementById("refContract");
+const newClientName=document.getElementById("newClientName");
+const installDate=document.getElementById("installDate");
+const monthlyValue=document.getElementById("monthlyValue");
+const submitBtn=document.getElementById("submitBtn");
+const cancelEditBtn=document.getElementById("cancelEditBtn");
+const editId=document.getElementById("editId");
+
+let selectedCity="Ubatuba";
+let indicationsData={};
+let currentUser="";
+
+// utilidades
+function formatDate(d){return new Date(d).toLocaleDateString("pt-BR",{month:"2-digit",year:"numeric"});}
+function calcDiscountDate(install){const d=new Date(install);d.setDate(d.getDate()+30);return d;}
+function calcDiscountValue(value){return (value*0.3).toFixed(2);}
+function getUserName(email){return email.split("@")[0];}
+
+// tabela
+function renderTable(){
+  indicationsTableBody.innerHTML="";
+  let arr=[];
+  Object.entries(indicationsData).forEach(([id,c])=>{
+    if(c.city===selectedCity) arr.push({...c,id});
+  });
+  arr.sort((a,b)=>calcDiscountDate(a.installDate)-calcDiscountDate(b.installDate));
+  arr.forEach(c=>{
+    const discountDate=calcDiscountDate(c.installDate);
+    const discountValue=calcDiscountValue(c.monthlyValue);
+    const row=document.createElement("tr");
+    row.innerHTML=`
+      <td>${c.refContract}</td>
+      <td>${formatDate(discountDate)}</td>
+      <td>R$ ${discountValue}</td>
+      <td>
+        <select class="form-select form-select-sm" onchange="updateLaunched('${c.id}',this.value)">
+          <option value="não" ${c.launched==="não"?"selected":""}>Não</option>
+          <option value="sim" ${c.launched==="sim"?"selected":""}>Sim</option>
+        </select>
+      </td>
+      <td>${c.lastUser||"-"}</td>
+      <td>
+        <button class="btn btn-sm btn-warning btn-action" onclick="editIndication('${c.id}')"><i class="bi bi-pencil"></i></button>
+        <button class="btn btn-sm btn-danger btn-action" onclick="deleteIndication('${c.id}')"><i class="bi bi-trash"></i></button>
+        <button class="btn btn-sm btn-secondary btn-action" onclick="copyInfo('${c.refContract}')"><i class="bi bi-clipboard"></i></button>
+      </td>`;
+    indicationsTableBody.appendChild(row);
+  });
+}
+
+// CRUD
+indicationForm.addEventListener("submit",e=>{
+  e.preventDefault();
+  const data={
+    newContract:newContract.value.trim(),
+    refContract:refContract.value.trim(),
+    newClientName:newClientName.value.trim(),
+    installDate:installDate.value,
+    monthlyValue:parseFloat(monthlyValue.value),
+    city:selectedCity,
+    launched:"não",
+    lastUser:currentUser
+  };
+  if(editId.value){
+    db.ref("indications/"+editId.value).set(data).then(()=>{
+      alert("Atualizado!");
+      indicationForm.reset();
+      editId.value="";
+      submitBtn.textContent="Cadastrar";
+      cancelEditBtn.style.display="none";
+    });
+  }else{
+    db.ref("indications").push(data).then(()=>{
+      alert("Cadastrado!");
+      indicationForm.reset();
+    });
+  }
+});
+function editIndication(id){
+  const c=indicationsData[id];
+  newContract.value=c.newContract;
+  refContract.value=c.refContract;
+  newClientName.value=c.newClientName;
+  installDate.value=c.installDate;
+  monthlyValue.value=c.monthlyValue;
+  editId.value=id;
+  submitBtn.textContent="Atualizar";
+  cancelEditBtn.style.display="inline-block";
+}
+cancelEditBtn.addEventListener("click",()=>{
+  indicationForm.reset();
+  editId.value="";
+  submitBtn.textContent="Cadastrar";
+  cancelEditBtn.style.display="none";
+});
+function deleteIndication(id){
+  if(confirm("Excluir indicação?")) db.ref("indications/"+id).remove();
+}
+function updateLaunched(id,value){
+  db.ref("indications/"+id).update({launched:value,lastUser:currentUser});
+}
+function copyInfo(contract){
+  navigator.clipboard.writeText("ASSIM QUE CLIENTE FOR INSTALADO, ATIVAR A PROMOÇÃO DO CLIENTE CÓDIGO "+contract);
+  alert("Texto copiado!");
+}
+
+// login
+loginForm.addEventListener("submit",e=>{
+  e.preventDefault();
+  auth.signInWithEmailAndPassword(loginEmail.value,loginPassword.value).then(u=>{
+    currentUser=getUserName(u.user.email);
+    loginSection.style.display="none";mainContent.style.display="block";loadData();
+  }).catch(err=>alert(err.message));
+});
+function loadData(){db.ref("indications").on("value",snap=>{indicationsData=snap.val()||{};renderTable();});}
+citySelector.addEventListener("change",e=>{selectedCity=e.target.value;currentCityDisplay.textContent=selectedCity;renderTable();});
+auth.onAuthStateChanged(u=>{
+  if(u){
+    currentUser=getUserName(u.email);
+    loginSection.style.display="none";mainContent.style.display="block";loadData();
+  }
+});
+logoutBtn.addEventListener("click",()=>{auth.signOut().then(()=>{
+  mainContent.style.display="none";
+  loginSection.style.display="block";
+});});
+</script>
+</body>
+</html>
